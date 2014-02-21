@@ -1,0 +1,30 @@
+#include "TaskGenerator.h"
+#include "TaskList.h"
+#include <json/json.h>
+
+#define TASK_SIZE 5
+
+void TaskGenerator::repMapToTask(std::map<int,int> &reqMap,TaskList &lst){
+    std::map<int,int>::iterator itr;
+    Json::FastWriter  writer;
+    for(itr = reqMap.begin();itr!=reqMap.end();itr++){
+        int map_id = itr->first;
+        int map_num = itr->second;
+        while(hasNext(map_num)){
+            Json::Value root;
+            root["type"] = 3;
+            root["map"] = map_id;
+            root["num"] = TASK_SIZE;
+            map_num -= TASK_SIZE;
+            lst.push_back(writer.write(root));
+        }
+        if(map_num <= 0)
+            reqMap.erase(map_id);
+        else
+            itr->second = map_num;
+    }
+}
+bool TaskGenerator::hasNext(int num){
+    return num <= TASK_SIZE;
+}
+
