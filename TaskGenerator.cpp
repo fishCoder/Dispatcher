@@ -16,15 +16,18 @@ void TaskGenerator::repMapToTask(std::map<int,int> &reqMap,TaskList &lst){
             root["map"] = map_id;
             root["num"] = TASK_SIZE;
             map_num -= TASK_SIZE;
+        //    std::cout << "[TaskGenerator]: task :" << writer.write(root) << std::endl;
             lst.push_back(writer.write(root));
         }
         if(map_num <= 0)
             reqMap.erase(map_id);
         else
             itr->second = map_num;
+        std::cout << "[TaskGenerator]: tasklist size :" << lst.size() << std::endl;
+
     }
 }
 bool TaskGenerator::hasNext(int num){
-    return num <= TASK_SIZE;
+    return num >= TASK_SIZE;
 }
 

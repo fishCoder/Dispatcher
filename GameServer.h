@@ -28,11 +28,9 @@ public:
     int getID();
 protected:
 private:
-
     int id;
     boost::shared_ptr<tcp::socket> psocket;
     boost::pool<> cpool;
-    char * readbuf;
     MessageList &msgLst;
     MapManager &mm;
 };

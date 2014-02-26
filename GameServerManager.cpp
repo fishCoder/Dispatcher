@@ -3,6 +3,7 @@
 #include "GameServerManager.h"
 #include <boost/bind.hpp>
 #include <json/json.h>
+#include <boost/shared_ptr.hpp>
 #include "Output.h"
 #include "Packege.h"
 #include "GameServer.h"
@@ -16,7 +17,7 @@ GameSeverManager::GameSeverManager(boost::asio::io_service &io_ser,MessageList &
     tcp::endpoint endpoint(tcp::v4(),GameServerPort);
     pacceptor.reset(new tcp::acceptor(io_ser,endpoint));
     preAccept();
-    std::cout << "GameSeverManager has started !" << std::endl;
+    std::cout << "[GameSeverManager]: has started !" << std::endl;
 }
 
 void GameSeverManager::preAccept(){
@@ -41,16 +42,30 @@ bool GameSeverManager::findGameServer(int id,GameSever **gs){
 void GameSeverManager::sendMap(int id,int type,int sence){
     GameSever *gameserver=NULL;
     reply_map reply;
+
     if(findGameServer(id,&gameserver)){
         try{
             std::string sendstr;
-            std::string & rmap = *(mm.getMap(type));
+            boost::shared_ptr<std::string>  rmap = mm.getMap(type);
             reply.result = 1;
             reply.scence_obj_id = sence;
             reply.verify_code = 0;
-            reply.data_len =  rmap.length();
-            sendstr.assign((const char *)(&reply),sizeof(reply_map));
-            sendstr.append(rmap);
+            reply.data_len =  rmap->length();
+
+            short _little_packege = rmap->length()+sizeof(reply_map);
+
+            int len = 2+_little_packege;
+            int clen = len;
+
+            char * send = new char[len+sizeof(int)*2];
+            memcpy(send,(&len),sizeof(int));
+            memcpy(send+4,(&clen),sizeof(int));
+            memcpy(send+8,(&_little_packege),sizeof(short));
+            memcpy(send+10,(&reply),sizeof(reply_map));
+            memcpy(send+24,rmap->c_str(),rmap->length());
+
+            sendstr.assign(send,len+sizeof(int)*2);
+
             gameserver->async_write(sendstr);
         }catch(...){
             if(!mm.isexsit(type)){

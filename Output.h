@@ -1,7 +1,7 @@
 
 #define GeneratorServerPort  9010
-#define GameServerPort  9090
-
+#define GameServerPort  9091
+#define NodeJsPort 9099
 
 
 

@@ -1,24 +1,26 @@
 #include "Packege.h"
-
+#include "stdio.h"
 #include <string.h>
 Packege::Packege(){
-    this->packege = NULL;
+    this->body = NULL;
     this->pos = 0;
 }
-void Packege::parse(big_packege * _packege){
-    this->packege = _packege;
-    this->len = _packege->len;
-    this->pos = 2*sizeof(int);
+void Packege::parse(char * _body,int len){
+    this->body = _body;
+    this->len = len;
+    this->pos = 0;
 }
 bool Packege::hasNext(){
-    return pos<=len;
+    return pos<len;
 }
-req_map * Packege::getBody(){
+req_map Packege::getBody(){
     short _size;
-    req_map * ptr_req_map=NULL;
-    memcpy(packege+pos,&_size,sizeof(short));
+    req_map  ptr_req_map;
+    memcpy(&_size,body+pos,sizeof(short));
+
     pos += sizeof(short);
-    ptr_req_map = (req_map *) packege+pos;
+
+    memcpy(&ptr_req_map,body+pos,sizeof(req_map));
     pos += _size;
     return ptr_req_map;
 }

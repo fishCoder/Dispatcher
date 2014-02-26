@@ -9,7 +9,7 @@ GeneratorServer::GeneratorServer(boost::asio::io_service &io_service,MessageList
     pacceptor.reset(new tcp::acceptor(io_service,endpoint));
     preAccept();
 
-    std::cout << "GeneratorServer has started !" << std::endl;
+    std::cout << "[GeneratorServer]: has started !" << std::endl;
 }
 
 void GeneratorServer::preAccept(){
@@ -20,8 +20,6 @@ void GeneratorServer::preAccept(){
 void GeneratorServer::acceptHandler(boost::shared_ptr<boost::asio::ip::tcp::socket> psocket , boost::system::error_code ec){
     preAccept();
     receiver.addGenerator(psocket);
-
-    std::cout << "accept a generator :" << std::endl;
 }
 
 void GeneratorServer::setState(int id , int state){

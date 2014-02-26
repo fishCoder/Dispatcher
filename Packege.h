@@ -14,29 +14,30 @@ typedef struct _little_packege{
     char * body;
 }little_packege;
 
-#pragma pack(push,1)
+
 typedef struct _req_map{
     unsigned short map_id;
     unsigned int scence_obj_id;
     _req_map():map_id(0),scence_obj_id(0){};
 }req_map;
-#pragma pack(pop)
 
+#pragma pack(push,1)
 typedef struct _reply_map{
     unsigned short result;
     unsigned int scence_obj_id;
     unsigned int verify_code;
     unsigned int data_len;
 }reply_map;
+#pragma pack(pop)
 
 class Packege{
 public:
     Packege();
-    void parse(big_packege * _packege);
+    void parse(char * _body,int len);
     bool hasNext();
-    req_map * getBody();
+    req_map  getBody();
 private:
-    big_packege * packege;
+    char * body;
     int pos;
     int len;
 };

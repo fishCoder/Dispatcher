@@ -10,7 +10,7 @@ void Receiver::pusk_msg(std::string msg){
     msgLst.push_back(msg);
 }
 void Receiver::regReader(boost::shared_ptr<Generator> pGenerator){
-    std::cout << "Receiver::regReader()" << std::endl;
+
     pGenerator->getSocket().async_read_some(boost::asio::buffer(pGenerator->readbuf,1024),boost::bind(&Receiver::readHanler,this,pGenerator,_1,_2));
 }
 void Receiver::readHanler(boost::shared_ptr<Generator> pGenerator,boost::system::error_code ec,size_t len){
@@ -22,14 +22,10 @@ void Receiver::readHanler(boost::shared_ptr<Generator> pGenerator,boost::system:
         int id = pGenerator->getID();
         delGenerator(id);
     }
-    std::cout << "Receiver::readHanler()" << std::endl;
 }
 
 
 void Receiver::addGenerator(boost::shared_ptr<boost::asio::ip::tcp::socket> psocket){
-
-    std::cout << "Receiver::addGenerator()" << std::endl;
-
     boost::shared_ptr<Generator> pGenerator(new Generator(psocket));
     lstGenerator.push_back(pGenerator);
     regReader(pGenerator);
@@ -60,8 +56,7 @@ boost::shared_ptr<Generator> Receiver::findGenerator(int id){
 
 void Receiver::delGenerator(int id){
 
-    std::cout << "Receiver::delGenerator() : " << id << std::endl;
-
+    std::cout << "[Receiver]  delete receiver:" << id << std::endl;
     std::list<share_generator>::iterator itr;
     for(itr=lstGenerator.begin(); itr!=lstGenerator.end(); itr++){
         if((*itr)->cmpID(id)){
@@ -77,7 +72,7 @@ void Receiver::sendHandler(int id,boost::system::error_code ec,size_t len){
     if(ec){
         delGenerator(id);
     }else{
-        std::cout << "send length : " << len << std::endl;
+     //   std::cout << "send length : " << len << std::endl;
     }
 }
 void Receiver::setState(int id , int state){
@@ -90,15 +85,12 @@ void Receiver::setState(int id , int state){
     }
 }
 void Receiver::sendTask(int id,std::string task){
-    std::cout << "Receiver::sendTask() ===start===" << std::endl;
-    std::cout << "task : " << task << std::endl;
+    std::cout << "[Receiver] task : " << task << std::endl;
     findGenerator(id)->getSocket().async_write_some(boost::asio::buffer(task.c_str(),task.length()), boost::bind(&Receiver::sendHandler,this,id,_1,_2));
-    std::cout << "Receiver::sendTask() ===end===" << std::endl;
+
 }
 void Receiver::showLstGenerator(){
     return ;
-    std::cout << "Receiver::showLstGenerator() " << std::endl;
-
     std::list<share_generator>::iterator itr;
     for(itr=lstGenerator.begin(); itr!=lstGenerator.end(); itr++){
         std::cout << "id  :  " << (*itr)->getID() << std::endl;

@@ -15,7 +15,7 @@ MapManager::MapManager(TaskList & _taskLst):taskLst(_taskLst){
 boost::shared_ptr<std::string>  MapManager::getMap(int type){
     std::string skey = rc->srandmember(boost::lexical_cast<std::string>(type));
     int key = boost::lexical_cast<int>(skey);
-    boost::shared_ptr<std::string> rmap(new  std::string(rc->hget(skey,"use")));
+    boost::shared_ptr<std::string> rmap(new  std::string(rc->hget(skey,"map")));
     useMapKey(key,type);
     return rmap;
 }

@@ -3,6 +3,7 @@
 
 #include "GeneratorServer.h"
 #include "GameServerManager.h"
+#include "NodeServer.h"
 #include "MessageList.h"
 #include "TaskList.h"
 #include "boost/threadpool.hpp"
@@ -20,6 +21,7 @@ private:
     TaskList taskLst;
     GeneratorServer gs;
     GameSeverManager gsm;
+    NodeServer node;
 };
 
 #endif
