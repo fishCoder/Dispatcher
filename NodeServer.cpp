@@ -52,11 +52,12 @@ void NodeServer::async_read(int _h_socket){
 }
 void NodeServer::read_handle(char * receive_pool_size, int _h_socket,boost::system::error_code ec,std::size_t length){
     if(!ec){
-        char * c_msg = (char *) socket_pool.ordered_malloc(boost::lexical_cast<int>(receive_pool_size));
-        std::cout << "[NodeServer]: receive_pool_size  " << receive_pool_size << std::endl;
+        int _receive_size = boost::lexical_cast<int>(receive_pool_size);
+        char * c_msg = (char *) socket_pool.ordered_malloc(_receive_size);
+        std::cout << "[NodeServer]: receive_pool_size  " << _receive_size << std::endl;
 
         boost::system::error_code ec;
-        find_socket_by_id(_h_socket)->read_some(boost::asio::buffer(c_msg,*receive_pool_size),ec);
+        find_socket_by_id(_h_socket)->read_some(boost::asio::buffer(c_msg,_receive_size),ec);
         if(!ec){
             std::cout << "[NodeServer]: content: " << c_msg << std::endl;
             Json::Reader reader;
@@ -64,7 +65,7 @@ void NodeServer::read_handle(char * receive_pool_size, int _h_socket,boost::syst
             Json::Value root;
             std::string json_msg(c_msg);
             if(reader.parse(json_msg,root)){
-                root["id"] = _h_socket;
+                root[_H_SOCKET] = _h_socket;
             }
             msgLst.push_back(writer.write(root));
         }

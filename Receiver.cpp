@@ -86,6 +86,7 @@ void Receiver::setState(int id , int state){
 }
 void Receiver::sendTask(int id,std::string task){
     std::cout << "[Receiver] task : " << task << std::endl;
+    findGenerator(id)->current_task = task;
     findGenerator(id)->getSocket().async_write_some(boost::asio::buffer(task.c_str(),task.length()), boost::bind(&Receiver::sendHandler,this,id,_1,_2));
 
 }

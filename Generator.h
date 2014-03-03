@@ -26,10 +26,10 @@ public:
     void clearbuf();
     int getID();
     char readbuf[1024];
+    std::string current_task;
 protected:
 private:
     boost::shared_ptr<tcp::socket> psocket;
-    std::string current_task;
     int state;
     int id;
 };

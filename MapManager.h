@@ -15,11 +15,12 @@ class MapManager{
 public:
     MapManager(TaskList & _taskLst);
 
-    boost::shared_ptr<std::string> getMap(int type);
+    std::pair<std::string,int> get_field_map(int map_type_id);
 
-    void useMapKey(int key,int type);
+    void useMapKey(std::string str_map_id,int type);
     void addDelType(int type);
     bool isexsit(int type);
+    bool is_over_time(std::string str_map_id);
 
 protected:
 private:

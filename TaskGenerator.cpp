@@ -1,5 +1,6 @@
 #include "TaskGenerator.h"
 #include "TaskList.h"
+#include "Output.h"
 #include <json/json.h>
 
 #define TASK_SIZE 5
@@ -31,3 +32,11 @@ bool TaskGenerator::hasNext(int num){
     return num >= TASK_SIZE;
 }
 
+void TaskGenerator::urgent_gen_task(int map_type_id,TaskList &lst){
+    Json::FastWriter  writer;
+    Json::Value root;
+    root["type"] = 3;
+    root[MAP_ID] = map_type_id;
+    root[AMOUNT] = TASK_SIZE;
+    lst.push_front(writer.write(root));
+}

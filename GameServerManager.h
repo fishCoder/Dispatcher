@@ -19,7 +19,7 @@ public:
     void acceptHandler(boost::shared_ptr<boost::asio::ip::tcp::socket> psocket , boost::system::error_code ec);
     void preAccept();
     bool findGameServer(int id,GameSever **gs);
-    void sendMap(int id,int type,int sence);
+    void sendMap(int id,int type,unsigned int sence);
     void delGameServer(int id);
 protected:
 private:

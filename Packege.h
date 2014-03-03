@@ -14,12 +14,13 @@ typedef struct _little_packege{
     char * body;
 }little_packege;
 
-
+#pragma pack(push,1)
 typedef struct _req_map{
     unsigned short map_id;
     unsigned int scence_obj_id;
     _req_map():map_id(0),scence_obj_id(0){};
 }req_map;
+#pragma pack(pop)
 
 #pragma pack(push,1)
 typedef struct _reply_map{

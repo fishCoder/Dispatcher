@@ -39,7 +39,7 @@ bool GameSeverManager::findGameServer(int id,GameSever **gs){
     }
     return false;
 }
-void GameSeverManager::sendMap(int id,int type,int sence){
+void GameSeverManager::sendMap(int id,int type,unsigned int sence){
     GameSever *gameserver=NULL;
     reply_map reply;
 

@@ -43,7 +43,7 @@ void  Configure::configure_redis_map(TaskList & taskLst){
 
     map<int,int> reqMap;
     try{
-        for(int i=0 ; i < root.size() ; i++){
+        for(unsigned int i=0 ; i < root.size() ; i++){
 
             Json::Value tmp_root = root[i];
             int map_id = tmp_root["map"].asInt();

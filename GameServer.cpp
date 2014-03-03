@@ -1,5 +1,6 @@
 #include "GameServer.h"
 //#include <boost/asio/yield.hpp>
+#include "Output.h"
 #include <json/json.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/bind.hpp>
@@ -20,7 +21,7 @@ void GameSever::async_read(){
     psocket->async_read_some(boost::asio::buffer(bp,8),boost::bind(&GameSever::read_handle,this,bp,_1,_2));
 }
 void GameSever::read_handle(void * _bp,boost::system::error_code ec,std::size_t length){
-    std::cout << "GameSever::read_handle()" << std::endl;
+    std::cout << "[GameSever] : read_handle()" << std::endl;
     if(!ec){
         Json::FastWriter  writer;
         big_packege * bp = (big_packege *)_bp;
@@ -37,7 +38,7 @@ void GameSever::read_handle(void * _bp,boost::system::error_code ec,std::size_t 
                 root["type"] = 100;
                 root["id"] = this->id;
                 root["map"] = ptr_req_map.map_id;
-                root["scence"] = ptr_req_map.scence_obj_id;
+                root[SENCE_ID] = ptr_req_map.scence_obj_id;
                 msgLst.push_back(writer.write(root));
             }
         }

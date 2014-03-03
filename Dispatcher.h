@@ -2,25 +2,28 @@
 #define _COMMON_DISPATCHER_
 
 #include "GeneratorServer.h"
-#include "GameServerManager.h"
+#include "GameServerClass.h"
 #include "NodeServer.h"
 #include "MessageList.h"
 #include "TaskList.h"
 #include "boost/threadpool.hpp"
+#include "MapManager.h"
+
 #include <iostream>
 
-class Dispatcher:boost::asio::coroutine{
+class Dispatcher{
 public:
     Dispatcher(boost::asio::io_service &io_service);
     void handleMessage();
     void supervise();
 protected:
 private:
-    boost::threadpool::pool tpool;
+    boost::threadpool::pool thread_pool;
     MessageList msgLst;
     TaskList taskLst;
+    MapManager map_manager;
     GeneratorServer gs;
-    GameSeverManager gsm;
+    GameSever  game_server;
     NodeServer node;
 };
 
