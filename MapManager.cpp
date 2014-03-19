@@ -18,7 +18,7 @@ MapManager::MapManager(TaskList & _taskLst):taskLst(_taskLst){
 
 
 
-std::pair<std::string,int> MapManager::get_field_map(int map_type_id){
+std::pair<unsigned int,std::string> MapManager::get_field_map(int map_type_id,std::string & map_data,std::string & loot_npc_data){
     int use_times = 0;
     std::string str_map_id;
     for(int i=0 ; i<5 ; i++){
@@ -29,14 +29,15 @@ std::pair<std::string,int> MapManager::get_field_map(int map_type_id){
             break;
         }
     }
-    std::string map_data = rc->hget(str_map_id,"map");
+    map_data.assign(rc->hget(str_map_id,"map"));
+    loot_npc_data.assign(rc->hget(str_map_id,"npc"));
     std::string str_verify_code = rc->hget(str_map_id,"code");
 
     unsigned int verify_code = boost::lexical_cast<unsigned int>(str_verify_code);
 
     useMapKey(str_map_id,map_type_id);
 
-    return std::pair<std::string,int>(map_data,verify_code);
+    return std::pair<unsigned int,std::string>(verify_code,str_map_id);
 }
 
 

@@ -10,7 +10,6 @@
 #include <json/json.h>
 
 
-
 using namespace std;
 typedef boost::asio::ip::tcp tcp;
 
@@ -108,15 +107,19 @@ void GameSever::delete_socket_by_id(int _h_socket){
 void GameSever::send_field_map(int _h_socket,int map_type_id ,int sence_id,MapManager & map_manager){
     reply_map reply;
     std::string sendstr;
-
-    pair<string,int> ret_pair = map_manager.get_field_map(map_type_id);
-    string & map_data = ret_pair.first;
+    std::string map_data;
+    std::string loot_npc_data;
+    std::pair<unsigned int,std::string>  ret = map_manager.get_field_map(map_type_id,map_data,loot_npc_data);
+    std::stringstream ss;
+    ss << "http://192.168.10.110:3000/getmap?map="<<ret.second<<"&&code="<<ret.first;
     reply.result = 1;
     reply.scence_obj_id = sence_id;
-    reply.verify_code = ret_pair.second;
-    reply.data_len = map_data.length();
+    reply.ulen = ss.str().length();
+    int data_len = map_data.length();
 
-    short _little_packege = map_data.length()+sizeof(reply_map);
+    int npc_data_len = loot_npc_data.length();
+
+    short _little_packege = sizeof(reply_map)+ss.str().length()+data_len+2*sizeof(int)+npc_data_len;
 
     int len = 2+_little_packege;
     int clen = len;
@@ -127,8 +130,11 @@ void GameSever::send_field_map(int _h_socket,int map_type_id ,int sence_id,MapMa
     memcpy(send+4,(&clen),sizeof(int));
     memcpy(send+8,(&_little_packege),sizeof(short));
     memcpy(send+10,(&reply),sizeof(reply_map));
-    memcpy(send+24,map_data.c_str(),map_data.length());
-
+    memcpy(send+18,ss.str().c_str(),reply.ulen);
+    memcpy(send+18+reply.ulen,&data_len,sizeof(int));
+    memcpy(send+22+reply.ulen,map_data.c_str(),map_data.length());
+    memcpy(send+22+reply.ulen+data_len,(&npc_data_len),sizeof(int));
+    memcpy(send+26+reply.ulen+data_len,loot_npc_data.c_str(),npc_data_len);
     async_write(_h_socket,send,packege_size);
 
     socket_pool.free(send);

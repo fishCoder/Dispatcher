@@ -14,7 +14,7 @@ class MapManager{
 public:
     MapManager(TaskList & _taskLst);
 
-    std::pair<std::string,int> get_field_map(int map_type_id);
+    std::pair<unsigned int,std::string> get_field_map(int map_type_id,std::string & map_data,std::string & loot_npc_data);
 
     void useMapKey(std::string str_map_id,int type);
     void addDelType(int type);

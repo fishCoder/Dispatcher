@@ -1,4 +1,2 @@
-Dispatcher
-==========
-增加了日志部分
-SQLite
+增加日志
+修正一些bug

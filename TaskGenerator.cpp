@@ -20,10 +20,15 @@ void TaskGenerator::repMapToTask(std::map<int,int> &reqMap,TaskList &lst){
         //    std::cout << "[TaskGenerator]: task :" << writer.write(root) << std::endl;
             lst.push_back(writer.write(root));
         }
-        if(map_num <= 0)
-            reqMap.erase(map_id);
-        else
-            itr->second = map_num;
+        if(map_num > 0){
+            Json::Value root;
+            root["type"] = 3;
+            root["map"] = map_id;
+            root["num"] = map_num;
+            lst.push_back(writer.write(root));
+        }
+
+        reqMap.erase(map_id);
         std::cout << "[TaskGenerator]: tasklist size :" << lst.size() << std::endl;
 
     }

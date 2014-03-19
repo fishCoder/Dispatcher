@@ -26,8 +26,7 @@ typedef struct _req_map{
 typedef struct _reply_map{
     unsigned short result;
     unsigned int scence_obj_id;
-    unsigned int verify_code;
-    unsigned int data_len;
+    unsigned short ulen;
 }reply_map;
 #pragma pack(pop)
 

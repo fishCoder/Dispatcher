@@ -39,10 +39,13 @@ Dispatcher::Dispatcher(boost::asio::io_service &io_service):thread_pool(2),
 }
 void Dispatcher::handleMessage(){
     Json::Reader reader;
-
+    int index = 0;
     while(true){
         //tpool.schedule(boost::bind(&Dispatcher::supervise,this));
-        supervise();
+        if(4==++index){
+            index = 0;
+            supervise();
+        }
 
         if(!msgLst.empty()){
             Json::Value root;
@@ -59,7 +62,7 @@ void Dispatcher::handleMessage(){
             case TaskComplete:
                 std::cout << "Parse : TaskComplete" <<std::endl;
                 _h_socket = root.get(_H_SOCKET,0).asInt();
-                {;
+                {
                     int map_type_id = root.get("map",-1).asInt();
                     int amount      = root.get("amount",-1).asInt();
                     int map_size    = root.get("size",-1).asInt();
@@ -79,12 +82,20 @@ void Dispatcher::handleMessage(){
                 if(map_manager.isexsit(field_map_id))
                     thread_pool.schedule(boost::bind(&GameSever::send_field_map,&game_server, _h_socket,field_map_id,root.get(SENCE_ID,-1).asUInt(), map_manager));
                 else{
-                    TaskGenerator task_generator;
-                    task_generator.urgent_gen_task(field_map_id,taskLst);
-
+                    //TaskGenerator task_generator;
+                    //task_generator.urgent_gen_task(field_map_id,taskLst);
+                    char failed_msg[18];
+                    unsigned int len = 2+sizeof(reply_map);
+                    unsigned int clen = len;
+                    unsigned short little = sizeof(reply_map);
                     reply_map reply;
                     reply.result = 0;
-                    game_server.async_write(_h_socket,&reply,sizeof(reply_map));
+                    reply.scence_obj_id=root.get(SENCE_ID,-1).asUInt();
+                    memcpy(failed_msg,&len,4);
+                    memcpy(failed_msg+4,&clen,4);
+                    memcpy(failed_msg+8,&little,2);
+                    memcpy(failed_msg+10,&reply,sizeof(reply));
+                    game_server.async_write(_h_socket,failed_msg,18);
                 }
 
                 break;
