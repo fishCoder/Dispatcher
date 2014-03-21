@@ -97,3 +97,6 @@ void Receiver::showLstGenerator(){
         std::cout << "id  :  " << (*itr)->getID() << std::endl;
     }
 }
+std::string Receiver::get_address(int id){
+    return this->findGenerator(id)->get_address();
+}

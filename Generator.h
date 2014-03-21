@@ -25,6 +25,7 @@ public:
     boost::asio::ip::tcp::socket & getSocket();
     void clearbuf();
     int getID();
+    std::string get_address();
     char readbuf[1024];
     std::string current_task;
 protected:

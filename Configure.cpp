@@ -17,7 +17,7 @@ void Configure::init_configure(){
 void Configure::save_config_file(string & str_config){
     try{
         ofstream ofs;
-        ofs.open("/home/lin/config.dat");
+        ofs.open("config.dat");
         ofs << str_config ;
         ofs.close();
     }catch (...){
@@ -27,7 +27,7 @@ void Configure::save_config_file(string & str_config){
 void Configure::read_config_file(string & str_config){
     try{
         ifstream ifs;
-        ifs.open("/home/lin/config.dat");
+        ifs.open("config.dat");
         ifs >> str_config ;
         ifs.close();
     }catch (...){

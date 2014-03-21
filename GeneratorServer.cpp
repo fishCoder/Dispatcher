@@ -26,6 +26,9 @@ void GeneratorServer::setState(int id , int state){
     receiver.setState(id,state);
 }
 
+std::string GeneratorServer::get_address(int id){
+    return  receiver.get_address(id);
+}
 
 void GeneratorServer::sendTask(int id,std::string task){
     return receiver.sendTask(id,task);

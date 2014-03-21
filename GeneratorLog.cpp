@@ -14,14 +14,19 @@ void GeneratorLog::add_record(int map_type_id,int amount ,int map_size){
     sqlite.add_gen_log(map_type_id,amount,map_size);
 }
 void GeneratorLog::start_record(){
-    if(start_time == NULL && !sqlite.has_gen_log_data()){
-        start_time = new ptime(second_clock::local_time());
-        ptime old_time(from_iso_string(sqlite.get_now_time()));
-        time_duration td = *start_time - old_time;
-        if(td.total_seconds() < time_bucket){
-            start_time = new ptime(from_iso_string(sqlite.get_now_time()));
-            return;
+    if(start_time == NULL){
+        if(!sqlite.has_gen_log_data()){
+            start_time = new ptime(second_clock::local_time());
+        }else{
+            start_time = new ptime(second_clock::local_time());
+            ptime old_time(from_iso_string(sqlite.get_now_time()));
+            time_duration td = *start_time - old_time;
+            if(td.total_seconds() < time_bucket){
+                start_time = new ptime(from_iso_string(sqlite.get_now_time()));
+                return;
+            }
         }
+
     }
     else{
         delete start_time;
@@ -52,8 +57,10 @@ std::string GeneratorLog::get_bucket_log(int map_type_id,int bucket){
     return sqlite.gen_log_to_json(map_type_id,bucket);
 }
 
-void GeneratorLog::slow_gen_log(int map_type_id,int duration,std::string time){
+void GeneratorLog::slow_gen_log(int map_type_id,int duration,std::string ip){
     std::stringstream sql;
-    sql << "insert slow_log(map,duration,time) values("<<map_type_id<<","<<duration<<","<<time<<");";
+    ptime time = second_clock::local_time();
+    sql << "insert into slow_log(map,duration,ip,gen_time) values("<<map_type_id<<","<<duration<<",'"<<ip<<"','"<<to_iso_string(time)<<"');";
     sqlite.exec_insert_sql(sql.str().c_str());
+    std::cout << "[GeneratorLog]" << sql.str() << std::endl;
 }

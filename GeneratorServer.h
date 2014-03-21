@@ -25,6 +25,7 @@ public:
     void setState(int id,int state);
     void acceptHandler(boost::shared_ptr<boost::asio::ip::tcp::socket> psocket , boost::system::error_code ec);
     void preAccept();
+    std::string get_address(int id);
 protected:
 private:
     typedef boost::asio::ip::tcp tcp;

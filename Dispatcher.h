@@ -14,10 +14,12 @@
 class Dispatcher{
 public:
     Dispatcher(boost::asio::io_service &io_service);
-    void handleMessage();
+    void fetchMessage();
+    void dealMessage(std::string msg);
     void supervise();
 protected:
 private:
+    Json::Reader reader;
     boost::threadpool::pool thread_pool;
     MessageList msgLst;
     TaskList taskLst;

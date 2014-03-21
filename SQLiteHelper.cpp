@@ -7,6 +7,7 @@ using namespace boost::filesystem;
 using namespace std;
 
 SQLiteHelper::SQLiteHelper(){
+    pDB = NULL;
     init_database();
 }
 
@@ -16,12 +17,14 @@ void SQLiteHelper::init_database(){
         if(res){}
         string map_info = "CREATE TABLE map_info(map INTEGER,num INTEGER,info VARCHAR(100));";
         string log_table = "CREATE TABLE log(id INTEGER primary key,map INTEGER,amount INTEGER,size INTEGER,time VARCHAR(20));";
-        string slow_log = "CREATE TABLE slow_log(id int primary key,map int,duration int,gen_time varchar(20));";
+        string slow_log = "CREATE TABLE slow_log(id INTEGER primary key,map INTEGER,duration INTEGER,ip char(15),gen_time varchar(20));";
         char * errMsg;
         sqlite3_exec(pDB , map_info.c_str() ,0 ,0, &errMsg);
         sqlite3_exec(pDB , log_table.c_str() ,0 ,0, &errMsg);
+        sqlite3_exec(pDB , slow_log.c_str() ,0 ,0, &errMsg);
     }else{
-        sqlite3_open("sql.db", &pDB);
+        if(pDB == NULL)
+            sqlite3_open("sql.db", &pDB);
     }
 }
 void SQLiteHelper::exec_select_sql(const char * c_sql){
@@ -29,6 +32,7 @@ void SQLiteHelper::exec_select_sql(const char * c_sql){
 }
 void SQLiteHelper::exec_insert_sql(const char * c_sql){
     char * errMsg;
+    init_database();
     sqlite3_exec(pDB,"begin transaction;",0,0, &errMsg);
     sqlite3_exec(pDB,c_sql,0,0, &errMsg);
     sqlite3_exec(pDB,"commit transaction;",0,0, &errMsg);
@@ -42,9 +46,9 @@ string SQLiteHelper::gen_log_to_json(int map_type_id,int bucket){
 
     stringstream strsql;
     strsql << "select * from log where map =";
-    strsql << map_type_id <<"ORDER BY id DESC limit 0,"<< 24 * bucket <<";";
+    strsql << map_type_id <<" ORDER BY id DESC limit 0,"<< 24 * bucket <<";";
 
-    cout << "strsql:" << strsql << endl;
+    cout << "strsql:" << strsql.str() << endl;
     sqlite3_stmt * stmt = NULL;
     int res = sqlite3_prepare(pDB,strsql.str().c_str(),-1,&stmt,0);
     int index = 0 ;
@@ -110,8 +114,8 @@ std::string SQLiteHelper::get_now_time(){
     return strsql;
 }
 int  SQLiteHelper::has_gen_log_data(){
-    std::string strsql = "select * from log ORDER BY DESC limit 0,1;";
+    std::string strsql = "select * from log ORDER BY id DESC limit 0,1;";
     sqlite3_stmt * stmt = NULL;
     int res = sqlite3_prepare(pDB,strsql.c_str(),-1,&stmt,0);
-    return res;
+    return (res = sqlite3_step(stmt)) == SQLITE_ROW;
 }

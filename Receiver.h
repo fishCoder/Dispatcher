@@ -34,7 +34,7 @@ public:
     void sendHandler(int id , boost::system::error_code ec , size_t len);
     void delGenerator(int id);
     void addGenerator(boost::shared_ptr<boost::asio::ip::tcp::socket> psocket);
-
+    std::string get_address(int id);
     void showLstGenerator();
 
 protected:
