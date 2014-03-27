@@ -70,7 +70,7 @@ string SQLiteHelper::gen_log_to_json(int map_type_id,int bucket){
 
         index++;
     }
-
+    sqlite3_finalize(stmt);
     return writer.write(root);
 }
 void SQLiteHelper::add_gen_log(int map_type_id,int amount,int gen_size){
@@ -93,6 +93,7 @@ void SQLiteHelper::add_gen_log(int map_type_id,int amount,int gen_size){
         cout << "insert strsql:" << strsql.str() << endl;
         sqlite3_exec(pDB,strsql.str().c_str(),0,0,0);
     }
+    sqlite3_finalize(stmt);
 }
 void SQLiteHelper::insert_gen_log(int map_type_id,string time){
     std::stringstream strsql;
@@ -111,11 +112,13 @@ std::string SQLiteHelper::get_now_time(){
     {
         strsql.assign((const char *)sqlite3_column_text(stmt,4));
     }
+    sqlite3_finalize(stmt);
     return strsql;
 }
 int  SQLiteHelper::has_gen_log_data(){
     std::string strsql = "select * from log ORDER BY id DESC limit 0,1;";
     sqlite3_stmt * stmt = NULL;
     int res = sqlite3_prepare(pDB,strsql.c_str(),-1,&stmt,0);
-    return (res = sqlite3_step(stmt)) == SQLITE_ROW;
+    sqlite3_finalize(stmt);
+    return res == SQLITE_ROW;
 }

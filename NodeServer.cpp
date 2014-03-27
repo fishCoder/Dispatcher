@@ -10,8 +10,8 @@ using namespace std;
 
 typedef boost::asio::ip::tcp tcp;
 
-NodeServer::NodeServer(boost::asio::io_service &io_ser,MessageList &_msgLst):
-socket_pool(sizeof(char)),socket_map(),io_service(io_ser),msgLst(_msgLst)
+NodeServer::NodeServer(boost::asio::io_service &io_ser,MessageCenter &_msg_center):
+socket_pool(sizeof(char)),socket_map(),io_service(io_ser),msg_center(_msg_center)
 {
     tcp::endpoint endpoint(tcp::v4(),NodeJsPort);
     pacceptor.reset(new tcp::acceptor(io_ser,endpoint));
@@ -67,7 +67,7 @@ void NodeServer::read_handle(char * receive_pool_size, int _h_socket,boost::syst
             if(reader.parse(json_msg,root)){
                 root[_H_SOCKET] = _h_socket;
             }
-            msgLst.push_back(writer.write(root));
+            msg_center.push_message(writer.write(root));
         }
 
         socket_pool.free(c_msg);

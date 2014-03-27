@@ -1,30 +1,30 @@
 
 
-#include "MessageList.h"
+#include "MessageCenter.h"
 #include <boost/thread/mutex.hpp>
 
 boost::mutex msg_mtx;
 
-MessageList::MessageList():msgLst(){
+MessageCenter::MessageCenter():msg_center(){
 
 }
-void MessageList::push_front(std::string msg){
+void MessageCenter::push_front(std::string msg){
     boost::mutex::scoped_lock  lock(msg_mtx);
-    msgLst.push_front(msg);
+    msg_center.push_front(msg);
 
 }
 
-void MessageList::push_back(std::string msg){
+void MessageCenter::push_back(std::string msg){
     boost::mutex::scoped_lock  lock(msg_mtx);
-    msgLst.push_back(msg);
+    msg_center.push_messge(msg);
 
 }
-std::string MessageList::pop_front(){
+std::string MessageCenter::pop_front(){
     boost::mutex::scoped_lock  lock(msg_mtx);
-    std::string msg = msgLst.front();
-    msgLst.pop_front();
+    std::string msg = msg_center.front();
+    msg_center.pop_front();
     return msg;
 }
-bool MessageList::empty(){
-    return msgLst.empty();
+bool MessageCenter::empty(){
+    return msg_center.empty();
 }

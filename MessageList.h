@@ -4,15 +4,15 @@
 
 #include <list>
 #include <iostream>
-class MessageList{
+class MessageCenter{
 public:
-    MessageList();
+    MessageCenter();
     void push_front(std::string msg);
     void push_back(std::string msg);
     std::string pop_front();
     bool empty();
 private:
-    std::list<std::string> msgLst;
+    std::list<std::string> msg_center;
 };
 
 #endif

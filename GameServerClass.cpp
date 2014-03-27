@@ -13,8 +13,8 @@
 using namespace std;
 typedef boost::asio::ip::tcp tcp;
 
-GameSever::GameSever(boost::asio::io_service &io_ser,MessageList &_msgLst):
-socket_pool(sizeof(char)),socket_map(),io_service(io_ser),msgLst(_msgLst)
+GameSever::GameSever(boost::asio::io_service &io_ser,MessageCenter &_msg_center):
+socket_map(),io_service(io_ser),msg_center(_msg_center)
 {
     tcp::endpoint endpoint(tcp::v4(),GameServerPort);
     pacceptor.reset(new tcp::acceptor(io_ser,endpoint));
@@ -40,37 +40,35 @@ void GameSever::acceptHandler(shared_ptr_socket psocket, boost::system::error_co
 }
 
 void GameSever::async_read(int _h_socket){
-    big_packege * bp = (big_packege *) socket_pool.ordered_malloc(sizeof(big_packege));
-    find_socket_by_id(_h_socket)->async_read_some(boost::asio::buffer(bp,sizeof(int)*2),boost::bind(&GameSever::read_handle,this,bp,_h_socket,_1,_2));
+    find_socket_by_id(_h_socket)->async_read_some(boost::asio::buffer(read_buf,READ_BUF_SIZE),boost::bind(&GameSever::read_handle,this,read_buf,_h_socket,_1,_2));
 }
-void GameSever::read_handle(void * packege_head,int _h_socket,boost::system::error_code ec,std::size_t length){
+void GameSever::read_handle(void * ptr_packege_head,int _h_socket,boost::system::error_code ec,std::size_t length){
     if(!ec){
-
+        //将接收到的协议包解析成json对象传入消息队列
         Json::FastWriter  writer;
-        big_packege * ptr_packege_head = (big_packege *)packege_head;
-        ptr_packege_head->body = (char *) socket_pool.ordered_malloc(ptr_packege_head->len);
-        boost::system::error_code m_ec;
-        find_socket_by_id(_h_socket)->read_some(boost::asio::buffer(ptr_packege_head->body,ptr_packege_head->len),m_ec);
+        big_packege packege_head;
+        //读取包头 获得包长度
+        memcpy(&packege_head,ptr_packege_head,sizeof(int)*2);
+        packege_head.body = (char *) ptr_packege_head+sizeof(int)*2;
 
-        if(!m_ec) {
-            Packege packege;
-            packege.parse(ptr_packege_head->body,ptr_packege_head->len);
-            while(packege.hasNext()){
-                req_map  ptr_req_map = packege.getBody();
-                Json::Value root;
-                root[OPERATE_TYEP] = 100;
-                root[_H_SOCKET] = _h_socket;
-                root[MAP_ID] = ptr_req_map.map_id;
-                root[SENCE_ID] = ptr_req_map.scence_obj_id;
-                msgLst.push_back(writer.write(root));
-            }
+        Packege packege;
+        //解析小包
+        packege.parse(packege_head.body,packege_head.len);
+        while(packege.hasNext()){
+            req_map  ptr_req_map = packege.getBody();
+            Json::Value root;
+            root[OPERATE_TYEP] = 100;
+            root[_H_SOCKET] = _h_socket;
+            root[MAP_ID] = ptr_req_map.map_id;
+            root[SENCE_ID] = ptr_req_map.scence_obj_id;
+            msg_center.push_message(writer.write(root));
         }
-        socket_pool.free(ptr_packege_head->body);
+
+        memset(read_buf,'\0',READ_BUF_SIZE);
         async_read(_h_socket);
     }else{
         delete_socket_by_id(_h_socket);
     }
-    socket_pool.free(packege_head);
 }
 
 void GameSever::async_write(int _h_socket,void * data,int data_size){
@@ -80,7 +78,8 @@ void GameSever::write_handle(int _h_socket,boost::system::error_code ec,std::siz
     if(ec)
         delete_socket_by_id(_h_socket);
     else
-        std::cout << "[GameServer] : send length :" << length << std::endl;
+    //    std::cout << "[GameServer] : send length :" << length << std::endl;
+    return;
 }
 
 
@@ -103,39 +102,68 @@ void GameSever::delete_socket_by_id(int _h_socket){
         }
     }
 }
-
+void GameSever::sendError(int _h_socket,unsigned int scence_obj_id){
+    char failed_msg[18];
+    unsigned int len = 2+sizeof(reply_map);
+    unsigned int clen = len;
+    unsigned short little = sizeof(reply_map);
+    reply_map reply;
+    reply.result = 0;
+    reply.scence_obj_id=scence_obj_id;
+    reply.ulen = 0;
+    memcpy(failed_msg,&len,4);
+    memcpy(failed_msg+4,&clen,4);
+    memcpy(failed_msg+8,&little,2);
+    memcpy(failed_msg+10,&reply,sizeof(reply));
+    async_write(_h_socket,failed_msg,18);
+}
 void GameSever::send_field_map(int _h_socket,int map_type_id ,int sence_id,MapManager & map_manager){
     reply_map reply;
     std::string sendstr;
     std::string map_data;
     std::string loot_npc_data;
-    std::pair<unsigned int,std::string>  ret = map_manager.get_field_map(map_type_id,map_data,loot_npc_data);
-    std::stringstream ss;
-    ss << "http://192.168.10.110:3000/getmap?map="<<ret.second<<"&&code="<<ret.first;
-    reply.result = 1;
-    reply.scence_obj_id = sence_id;
-    reply.ulen = ss.str().length();
-    int data_len = map_data.length();
+    try{
+        std::pair<unsigned int,std::string>  ret = map_manager.get_field_map(map_type_id,map_data,loot_npc_data);
+        std::stringstream ss;
+        ss << "http://"<<param.NODE_ADDRESS<<"/getmap?map="<<ret.second<<"&&code="<<ret.first;
 
-    int npc_data_len = loot_npc_data.length();
+        reply.result = 1;
+        reply.scence_obj_id = sence_id;
+        reply.ulen = ss.str().length();
 
-    short _little_packege = sizeof(reply_map)+ss.str().length()+data_len+2*sizeof(int)+npc_data_len;
+        int data_len = map_data.length();
 
-    int len = 2+_little_packege;
-    int clen = len;
+        int npc_data_len = loot_npc_data.length();
 
-    int packege_size = len+sizeof(int)*2;
-    char * send = (char *) socket_pool.ordered_malloc(packege_size);
-    memcpy(send,(&len),sizeof(int));
-    memcpy(send+4,(&clen),sizeof(int));
-    memcpy(send+8,(&_little_packege),sizeof(short));
-    memcpy(send+10,(&reply),sizeof(reply_map));
-    memcpy(send+18,ss.str().c_str(),reply.ulen);
-    memcpy(send+18+reply.ulen,&data_len,sizeof(int));
-    memcpy(send+22+reply.ulen,map_data.c_str(),map_data.length());
-    memcpy(send+22+reply.ulen+data_len,(&npc_data_len),sizeof(int));
-    memcpy(send+26+reply.ulen+data_len,loot_npc_data.c_str(),npc_data_len);
-    async_write(_h_socket,send,packege_size);
+        short _little_packege = sizeof(reply_map)+ss.str().length()+data_len+2*sizeof(int)+npc_data_len;
 
-    socket_pool.free(send);
+        int len = 2+_little_packege;
+        int clen = len;
+
+        int packege_size = len+sizeof(int)*2;
+        char * send = send_buf;
+        //大包头
+        memcpy(send,(&len),sizeof(int));
+        memcpy(send+4,(&clen),sizeof(int));
+
+        //小包头
+        memcpy(send+8,(&_little_packege),sizeof(short));
+
+        //包体
+        memcpy(send+10,(&reply),sizeof(reply_map));
+
+        memcpy(send+18,ss.str().c_str(),reply.ulen);
+        memcpy(send+18+reply.ulen,&data_len,sizeof(int));
+        memcpy(send+22+reply.ulen,map_data.c_str(),map_data.length());
+        memcpy(send+22+reply.ulen+data_len,(&npc_data_len),sizeof(int));
+        memcpy(send+26+reply.ulen+data_len,loot_npc_data.c_str(),npc_data_len);
+        async_write(_h_socket,send,packege_size);
+        memset(send,'\0',SEND_BUF_SIZE);
+
+    }catch(...){
+        std::cout << "[GameSever][getMap][error]" << std::endl;
+        sendError(_h_socket,sence_id);
+        return;
+    }
+
 }

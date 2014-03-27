@@ -25,6 +25,7 @@
 
 
 struct _settings_param_{
+    std::string NODE_ADDRESS;
     std::string redis_address;
     int redis_port;
     int TASK_SIZE;
@@ -36,6 +37,7 @@ struct _settings_param_{
     int is_run_config;
     _settings_param_(){
         INI ini("dispatcher.ini");
+        NODE_ADDRESS  = ini.get("dispatcher.nodeaddress");
         redis_address = ini.get("dispatcher.redisaddress");
         redis_port    = ini.get_int("dispatcher.redisport");
         EXSIT_TIME    = ini.get_int("dispatcher.exsit_time");

@@ -11,9 +11,7 @@
 
 using namespace std;
 
-void Configure::init_configure(){
 
-}
 void Configure::save_config_file(string & str_config){
     try{
         ofstream ofs;
@@ -42,7 +40,7 @@ void  Configure::configure_redis_map(TaskList & taskLst){
     Json::Value root;
     if(!reader.parse(json_config,root)) return ;
 
-    map<int,int> reqMap;
+    map<int,int> reqMap;//map的key是地图模板id value是数量
     try{
         for(unsigned int i=0 ; i < root.size() ; i++){
 
@@ -56,9 +54,10 @@ void  Configure::configure_redis_map(TaskList & taskLst){
     }
 
     TaskGenerator generator;
+    //生成任务
     generator.repMapToTask(reqMap,taskLst);
 }
-void Configure::modify_configure_scheme(std::string json_config){
+void Configure::modify_configure_scheme(std::string  json_config){
     save_config_file(json_config);
 }
 void Configure::modify_and_config_reids(TaskList & taskLst,std::string json_config){
@@ -76,6 +75,8 @@ void Configure::change_config_scheme(int map_type_id,int map_amount,int opr_type
     if(!reader.parse(json_config,root)) return ;
     try{
         if(opr_type==OPR_DEL){
+            //删除操作
+            //构造一个新的json对象，将不包含待删除项的元素拷贝到新json对象中
             Json::Value tmp_root;
             for(unsigned int i=0 ; i < root.size() ; i++){
                 if(root[i]["map"].asInt() != map_type_id){

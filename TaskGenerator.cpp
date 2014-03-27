@@ -28,7 +28,7 @@ void TaskGenerator::repMapToTask(std::map<int,int> &reqMap,TaskList &lst){
             lst.push_back(writer.write(root));
         }
         reqMap.erase(map_type_id);
-        std::cout << "[TaskGenerator]: tasklist size :" << lst.size() << std::endl;
+        //std::cout << "[TaskGenerator]: tasklist size :" << lst.size() << std::endl;
 
     }
 }

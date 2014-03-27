@@ -5,7 +5,7 @@
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/pool/pool.hpp>
 
-#include "MessageList.h"
+#include "MessageCenter.h"
 
 typedef boost::shared_ptr<boost::asio::ip::tcp::socket> shared_ptr_socket;
 
@@ -13,7 +13,7 @@ typedef boost::shared_ptr<boost::asio::ip::tcp::socket> shared_ptr_socket;
 
 class NodeServer{
 public:
-    NodeServer(boost::asio::io_service &io_ser,MessageList &_msgLst);
+    NodeServer(boost::asio::io_service &io_ser,MessageCenter &_msg_center);
 
     void preAccept();
     void acceptHandler(shared_ptr_socket psocket, boost::system::error_code ec);
@@ -30,7 +30,7 @@ private:
     boost::pool<> socket_pool;
     std::map<int,shared_ptr_socket> socket_map;
     boost::asio::io_service &io_service;
-    MessageList &msgLst;
+    MessageCenter &msg_center;
     boost::shared_ptr<boost::asio::ip::tcp::acceptor> pacceptor;
 };
 

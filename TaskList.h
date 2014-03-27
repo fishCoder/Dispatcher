@@ -4,11 +4,12 @@
 
 #include <list>
 #include <iostream>
-
+#include "GeneratorClass.h"
 
 class TaskList{
 public:
-    TaskList();
+    TaskList(Generator &generator);
+    void set_generator();
     void push_front(std::string task);
     void push_back(std::string task);
     std::string pop_front();
@@ -16,6 +17,7 @@ public:
     int size();
 private:
     std::list<std::string> taskLst;
+    Generator &generator;
 };
 
 #endif
