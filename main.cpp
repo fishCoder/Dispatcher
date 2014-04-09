@@ -12,7 +12,9 @@
 #include "Dispatcher.h"
 
 using namespace std;
-
+/**
+*以精灵进程方式启动
+*/
 int daemon_init(){
     pid_t pid;
     if((pid=fork())<0){
@@ -21,17 +23,18 @@ int daemon_init(){
         exit(0);
     }
     setsid();
-    //chdir();
     umask(0);
     return 0;
 }
 
-int main()
+int main(int argc,char ** argv)
 {
-//    daemon_init();
+    if(argc>1)daemon_init();
 
     boost::asio::io_service io_serv;
     Dispatcher dispatcher(io_serv);
+
+    //boost::thread th(boost::bind(&boost::asio::io_service::run,&io_serv));
     io_serv.run();
 
     return 0;

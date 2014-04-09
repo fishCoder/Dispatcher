@@ -13,6 +13,8 @@ public:
     void add_record(int map_type_id,int amount,int map_size);
     std::string get_bucket_log(int map_type_id,int bucket);
     void slow_gen_log(int map_type_id,int duration,std::string ip);
+    void slow_deal_log(std::string & desc,int duration);
+    void no_map_log(int map_type_id,int task_size);
 protected:
     void start_record();
     bool is_over_bucket();

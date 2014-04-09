@@ -6,6 +6,7 @@
 #include <boost/pool/pool.hpp>
 
 #include "MessageCenter.h"
+#include "Output.h"
 
 typedef boost::shared_ptr<boost::asio::ip::tcp::socket> shared_ptr_socket;
 

@@ -2,8 +2,6 @@
 #include <boost/thread/mutex.hpp>
 
 boost::mutex task_mtx;
-boost::condition not_full;
-boost::condition not_empty;
 
 TaskList::TaskList(Generator &generator):taskLst(),generator(generator){
 

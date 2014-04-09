@@ -18,18 +18,21 @@ void SQLiteHelper::init_database(){
         string map_info = "CREATE TABLE map_info(map INTEGER,num INTEGER,info VARCHAR(100));";
         string log_table = "CREATE TABLE log(id INTEGER primary key,map INTEGER,amount INTEGER,size INTEGER,time VARCHAR(20));";
         string slow_log = "CREATE TABLE slow_log(id INTEGER primary key,map INTEGER,duration INTEGER,ip char(15),gen_time varchar(20));";
+        string no_map_long = "CREATE TABLE no_map_log(map_id INTEGER,task_size INTEGER,time VARCHAR(20));";
+        string slow_deal_log = "CREATE TABLE slow_deal_log(decs VARCHAR(1024),duration INTEGER,gen_time varchar(20));";
         char * errMsg;
         sqlite3_exec(pDB , map_info.c_str() ,0 ,0, &errMsg);
         sqlite3_exec(pDB , log_table.c_str() ,0 ,0, &errMsg);
+
         sqlite3_exec(pDB , slow_log.c_str() ,0 ,0, &errMsg);
+        sqlite3_exec(pDB , no_map_long.c_str() ,0 ,0, &errMsg);
+        sqlite3_exec(pDB , slow_deal_log.c_str() ,0 ,0, &errMsg);
     }else{
         if(pDB == NULL)
             sqlite3_open("sql.db", &pDB);
     }
 }
-void SQLiteHelper::exec_select_sql(const char * c_sql){
 
-}
 void SQLiteHelper::exec_insert_sql(const char * c_sql){
     char * errMsg;
     init_database();
@@ -48,7 +51,7 @@ string SQLiteHelper::gen_log_to_json(int map_type_id,int bucket){
     strsql << "select * from log where map =";
     strsql << map_type_id <<" ORDER BY id DESC limit 0,"<< 24 * bucket <<";";
 
-    cout << "strsql:" << strsql.str() << endl;
+    //cout << "strsql:" << strsql.str() << endl;
     sqlite3_stmt * stmt = NULL;
     int res = sqlite3_prepare(pDB,strsql.str().c_str(),-1,&stmt,0);
     int index = 0 ;
@@ -90,7 +93,7 @@ void SQLiteHelper::add_gen_log(int map_type_id,int amount,int gen_size){
         std::stringstream strsql;
         strsql << "update log set amount = "<< (gen_amount+amount) <<", size ="<<(last_gen_size+gen_size);
         strsql << " where id=" << id << ";";
-        cout << "insert strsql:" << strsql.str() << endl;
+        //cout << "insert strsql:" << strsql.str() << endl;
         sqlite3_exec(pDB,strsql.str().c_str(),0,0,0);
     }
     sqlite3_finalize(stmt);
@@ -99,7 +102,7 @@ void SQLiteHelper::insert_gen_log(int map_type_id,string time){
     std::stringstream strsql;
     strsql << "insert into log(map,amount,size,time)  values(";
     strsql  << map_type_id << ",0,0,'"<< time <<"');";
-    cout << "strsql:" << strsql.str() << endl;
+    //cout << "strsql:" << strsql.str() << endl;
     exec_insert_sql(strsql.str().c_str());
 }
 std::string SQLiteHelper::get_now_time(){

@@ -62,5 +62,20 @@ void GeneratorLog::slow_gen_log(int map_type_id,int duration,std::string ip){
     ptime time = second_clock::local_time();
     sql << "insert into slow_log(map,duration,ip,gen_time) values("<<map_type_id<<","<<duration<<",'"<<ip<<"','"<<to_iso_string(time)<<"');";
     sqlite.exec_insert_sql(sql.str().c_str());
-    std::cout << "[GeneratorLog]" << sql.str() << std::endl;
+    //std::cout << "[GeneratorLog]" << sql.str() << std::endl;
 }
+void GeneratorLog::slow_deal_log(std::string & desc,int duration){
+    std::stringstream sql;
+    ptime time = second_clock::local_time();
+    sql << "insert into slow_deal_log values('"<<desc<<"',"<<duration<<",'"<<to_iso_string(time)<<"');";
+    sqlite.exec_insert_sql(sql.str().c_str());
+    //std::cout << "[GeneratorLog]" << sql.str() << std::endl;
+}
+void GeneratorLog::no_map_log(int map_type_id,int task_size){
+    std::stringstream sql;
+    ptime time = second_clock::local_time();
+    sql << "insert into no_map_log values("<<map_type_id<<","<<task_size<<",'"<<to_iso_string(time)<<"');";
+    sqlite.exec_insert_sql(sql.str().c_str());
+    //std::cout << "[GeneratorLog]" << sql.str() << std::endl;
+}
+

@@ -17,8 +17,6 @@ class TaskList;
 
 class Configure{
 public:
-    //将配置文件里的数据转换成具体生成任务，转入任务队列
-    void configure_redis_map(TaskList & taskLst);
     //将修改后的json配置数据保存到文件
     void modify_configure_scheme(std::string  json_config);
     //修改并生成任务

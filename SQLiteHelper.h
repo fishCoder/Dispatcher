@@ -9,7 +9,6 @@ class SQLiteHelper{
 public:
     SQLiteHelper();
     void init_database();
-    void exec_select_sql(const char * c_sql);
     void exec_insert_sql(const char * c_sql);
 
     std::string gen_log_to_json(int map_type_id ,int bucket);

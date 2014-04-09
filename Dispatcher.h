@@ -9,7 +9,10 @@
 #include "MapManager.h"
 #include "GeneratorLog.h"
 #include "MessageCenter.h"
+#include "Output.h"
 #include <iostream>
+
+
 
 class Dispatcher{
 public:
@@ -17,7 +20,7 @@ public:
     void dealMessage(std::string msg);
 protected:
 private:
-    Json::Reader reader;
+
     MessageCenter msg_center;
     Generator gs;
     TaskList taskLst;

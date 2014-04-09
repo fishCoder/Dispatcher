@@ -12,6 +12,7 @@
 #include <boost/asio/ip/tcp.hpp>
 
 #include "MessageCenter.h"
+#include "Output.h"
 
 #define READ_BUF_SIZE 1024
 #define SEND_BUF_SIZE 100<<10
@@ -37,6 +38,7 @@ public:
     //地图查找失败发送失败消息给服务器
     void sendError(int _h_socket,unsigned int scence_obj_id);
 
+    bool try_find_socket(int _h_socket);
     shared_ptr_socket find_socket_by_id(int _h_socket);
     void delete_socket_by_id(int _h_socket);
 private:

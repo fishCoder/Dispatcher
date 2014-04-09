@@ -1,6 +1,7 @@
 #include <iostream>
-
 #include <map>
+
+#include "Output.h"
 
 class TaskList;
 class TaskGenerator{
