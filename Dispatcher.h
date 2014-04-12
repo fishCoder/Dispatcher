@@ -8,7 +8,7 @@
 #include "TaskList.h"
 #include "boost/threadpool.hpp"
 #include "MapManager.h"
-
+#include "GeneratorLog.h"
 #include <iostream>
 
 class Dispatcher{
@@ -25,6 +25,7 @@ private:
     GeneratorServer gs;
     GameSever  game_server;
     NodeServer node;
+    GeneratorLog log;
 };
 
 #endif

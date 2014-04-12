@@ -6,7 +6,6 @@
 #include <redisclient.h>
 #include <boost/shared_ptr.hpp>
 #include <map>
-#include <boost/shared_ptr.hpp>
 #include "TaskList.h"
 
 

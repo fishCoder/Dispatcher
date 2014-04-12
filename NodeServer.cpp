@@ -54,12 +54,12 @@ void NodeServer::read_handle(char * receive_pool_size, int _h_socket,boost::syst
     if(!ec){
         int _receive_size = boost::lexical_cast<int>(receive_pool_size);
         char * c_msg = (char *) socket_pool.ordered_malloc(_receive_size);
-        std::cout << "[NodeServer]: receive_pool_size  " << _receive_size << std::endl;
+        //std::cout << "[NodeServer]: receive_pool_size  " << _receive_size << std::endl;
 
         boost::system::error_code ec;
         find_socket_by_id(_h_socket)->read_some(boost::asio::buffer(c_msg,_receive_size),ec);
         if(!ec){
-            std::cout << "[NodeServer]: content: " << c_msg << std::endl;
+            //std::cout << "[NodeServer]: content: " << c_msg << std::endl;
             Json::Reader reader;
             Json::FastWriter writer;
             Json::Value root;

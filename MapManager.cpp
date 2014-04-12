@@ -77,7 +77,7 @@ void MapManager::addDelType(int type){
 bool MapManager::is_over_time(std::string str_map_id){
     std::string str_time = rc->hget(str_map_id,"time");
     ptime last_time = time_from_string(str_time);
-    ptime now_time;
+    ptime now_time(second_clock::local_time());
     time_duration td = now_time - last_time;
     return (td.hours()/24)>INTERVAL_DAYS;
 }
