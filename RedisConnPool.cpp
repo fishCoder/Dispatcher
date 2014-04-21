@@ -1,10 +1,7 @@
 #include "RedisConnPool.h"
 
 
-#include <boost/thread/mutex.hpp>
 
-boost::mutex rc_mtx;
-boost::mutex get_mtx;
 
 RedisConnPool::RedisConnPool(){
     for(int i=0 ; i<param.THREAD_POOL_NUM+1 ; i++){

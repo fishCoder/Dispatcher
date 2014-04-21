@@ -4,7 +4,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/shared_ptr.hpp>
-
+#include <boost/thread/mutex.hpp>
 
 #include "MessageCenter.h"
 #include "Output.h"
@@ -40,8 +40,9 @@ public:
 
     void async_read(int _h_socket);
     void read_handle(int _h_socket,boost::system::error_code ec,std::size_t length);
+    void read_body_handle(int _h_socket,boost::system::error_code ec,std::size_t length);
 
-    void async_write(int _h_socket,void * data,int data_size);
+    void async_write(int _h_socket,void * data,unsigned int data_size);
     void write_handle(int _h_socket,boost::system::error_code ec,std::size_t length);
 
     /**
@@ -73,12 +74,13 @@ public:
     void set_generator_free(int _h_socket);
     void set_generator_busy(int _h_socket);
 
-
+    char * read_buffer(int _h_socket);
+    char * send_buffer(int _h_socket);
 private:
+    boost::mutex gen_mtx;
     //接收缓冲区
-    char read_buf[READ_BUF_SIZE];
-    //发送缓冲区
-    char send_buf[READ_BUF_SIZE];
+    map<int,char *>  map_read_buf;
+    map<int,char *>  map_send_buf;
 
     std::map<int,gen_info *> gen_map;
 
@@ -86,7 +88,13 @@ private:
     MessageCenter &msg_center;
     boost::shared_ptr<boost::asio::ip::tcp::acceptor> pacceptor;
 
-    //空闲的生成器数量
+    /**
+    *free_gen_amount 表示生成器的空闲数量
+    *如 free_gen_amount = 1 表示有个一个生成器处于空闲状态
+    *如 free_gen_amount = 0 表示没有生存器处于空闲
+    *当一个空闲的生存器分配到一个任务free_gen_amount将减一
+    *当一个生存器完成一个任务而调度器没有再分配一个任务给它时，则free_gen_amount加一
+    */
     int free_gen_amount;
 };
 

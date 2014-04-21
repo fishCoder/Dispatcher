@@ -11,6 +11,8 @@
 #include <signal.h>
 #include <unistd.h>
 
+
+
 using namespace std;
 typedef boost::asio::ip::tcp tcp;
 
@@ -33,17 +35,21 @@ void GameSever::preAccept(){
     pacceptor->async_accept(*p,boost::bind(&GameSever::acceptHandler,this,p,_1));
 }
 void GameSever::acceptHandler(shared_ptr_socket psocket, boost::system::error_code ec){
+
     if(!ec){
         boost::posix_time::ptime now=boost::posix_time::microsec_clock::universal_time();
         int _h_socket = ++amount;//abs((now.time_of_day().total_microseconds()<<32)>>32);
-        std::cout << "[GameServer]: there is a GameServer connecting : " << _h_socket << std::endl;
+
         set_socket_option(psocket);
         socket_map.insert(pair<int,shared_ptr_socket>(_h_socket,psocket));
+        map_read_buf.insert(pair<int,char *>(_h_socket,new char[READ_BUF_SIZE]));
+        map_write_buf.insert(pair<int,char*>(_h_socket,new char[SEND_BUF_SIZE]));
         async_read(_h_socket);
 
+        std::cout << "[GameServer]: there is a GameServer connecting : " << _h_socket << std::endl;
     }else{
         psocket->close();
-        //std::cout << "[GameSever][acceptHandler]:" << ec.message() << std::endl;
+        std::cout << "[GameSever][acceptHandler]["<< socket_map.size() <<"]:" << ec.message() << std::endl;
     }
     preAccept();
 
@@ -51,35 +57,45 @@ void GameSever::acceptHandler(shared_ptr_socket psocket, boost::system::error_co
 
 void GameSever::async_read(int _h_socket){
     if(try_find_socket(_h_socket))
-        find_socket_by_id(_h_socket)->async_read_some(boost::asio::buffer(read_buf,sizeof(unsigned int)*2),boost::bind(&GameSever::read_handle,this,read_buf,_h_socket,_1,_2));
+        find_socket_by_id(_h_socket)->async_receive(boost::asio::buffer(read_buffer(_h_socket),sizeof(unsigned int)*2),boost::bind(&GameSever::read_handle,this,_h_socket,_1,_2));
 }
-void GameSever::read_handle(void * ptr_packege_head,int _h_socket,boost::system::error_code ec,std::size_t length){
+void GameSever::read_handle(int _h_socket,boost::system::error_code ec,std::size_t length){
     if(!ec){
-        //将接收到的协议包解析成json对象传入消息队列
-        Json::FastWriter  writer;
+
         big_packege packege_head;
         //读取包头 获得包长度
-        memcpy(&packege_head,ptr_packege_head,sizeof(int)*2);
-        packege_head.body = (char *) ptr_packege_head+sizeof(int)*2;
-        /**
-        * 接收到的长度 len
-        */
-        unsigned int len=0;
-        /**
-        *尝试从socket中读取len字节
-        */
-        //std::cout << "读取开始" << std::endl;
-        while(len!=packege_head.len){
-            len += find_socket_by_id(_h_socket)->read_some(boost::asio::buffer((packege_head.body+len),(packege_head.len-len)),ec);
-            if(ec){
-                std::stringstream ss;
-                ss << "{\"type\":400,\"hsocket\":"<<_h_socket<<"}";
-                msg_center.push_message(ss.str());
-                std::cout << "[GameSever][read_handle][body] " << ec.message() << std::endl;
-            }
-        }
-        //std::cout << "读取完毕" << std::endl;
+        memcpy(&packege_head,read_buffer(_h_socket),sizeof(int)*2);
 
+        find_socket_by_id(_h_socket)->async_receive(boost::asio::buffer(read_buffer(_h_socket),packege_head.len),
+                                                          boost::bind(&GameSever::read_body_handle,this,_h_socket,_1,_2));
+
+    }else{
+        std::stringstream ss;
+        ss << "{\"type\":400,\"hsocket\":"<<_h_socket<<"}";
+        msg_center.push_message(ss.str());
+        std::cout << "[GameSever][read_handle] " << ec.message() << std::endl;
+    }
+}
+
+void GameSever::read_body_handle(int _h_socket,boost::system::error_code ec,std::size_t length){
+
+        //std::cout << "[GameSever][read_handle]["<<packege_head.len<<"] "<< len <<std::endl;
+
+        if(ec){
+            std::stringstream ss;
+            ss << "{\"type\":400,\"hsocket\":"<<_h_socket<<"}";
+            msg_center.push_message(ss.str());
+            std::cout << "[GameSever][read_handle][body] " << ec.message() << std::endl;
+            return;
+        }
+        big_packege packege_head;
+        //读取包头 获得包长度
+        char * read_buf = read_buffer(_h_socket);
+        packege_head.len = length;
+        packege_head.clen = length;
+        packege_head.body = (char *) read_buf;
+
+        Json::FastWriter  writer;
         Packege packege;
         //解析小包
         packege.parse(packege_head.body,packege_head.len);
@@ -95,26 +111,20 @@ void GameSever::read_handle(void * ptr_packege_head,int _h_socket,boost::system:
         //std::cout << "解析完毕" << std::endl;
         memset(read_buf,'\0',READ_BUF_SIZE);
         async_read(_h_socket);
-    }else{
-        std::stringstream ss;
-        ss << "{\"type\":400,\"hsocket\":"<<_h_socket<<"}";
-        msg_center.push_message(ss.str());
-        //std::cout << "[GameSever][read_handle] " << ec.message() << std::endl;
-    }
 }
 
 void GameSever::async_write(int _h_socket,void * data,int data_size){
-    if(try_find_socket(_h_socket)){
-        find_socket_by_id(_h_socket)->async_write_some(boost::asio::buffer(data,data_size),boost::bind(&GameSever::write_handle,this,_h_socket,_1,_2));
-        std::cout << "[static send_amount]" << send_amount++ << "send_length :"  << data_size << std::endl;
-    }
+    boost::mutex::scoped_lock  lock(gs_mtx);
+    if(try_find_socket(_h_socket))
+        find_socket_by_id(_h_socket)->async_send(boost::asio::buffer(data,data_size),boost::bind(&GameSever::write_handle,this,_h_socket,_1,_2));
+    //std::cout << "[static send_amount]" << send_amount++ << "send_length :"  << data_size << std::endl;
 }
 void GameSever::write_handle(int _h_socket,boost::system::error_code ec,std::size_t length){
     if(ec){
         std::stringstream ss;
         ss << "{\"type\":400,\"hsocket\":"<<_h_socket<<"}";
         msg_center.push_message(ss.str());
-        std::cout << "[GameSever][write_handle] " << ec.message() << std::endl;
+        std::cout << "[GameSever][write_handle]["<< _h_socket <<"] " << ec.message() << std::endl;
     }
     else
     //    std::cout << "[GameServer] : send length :" << length << std::endl;
@@ -131,13 +141,28 @@ shared_ptr_socket GameSever::find_socket_by_id(int _h_socket){
 
 
 void GameSever::delete_socket_by_id(int _h_socket){
+    boost::mutex::scoped_lock  lock(gs_mtx);
     //std::cout << "[GameSever]: delete a GameSever socket: " << _h_socket << std::endl;
-    socket_map.erase(_h_socket);
-    //std::cout << "[GameSever][socket_map][size]:" << socket_map.size() << std::endl;
+    if(try_find_socket(_h_socket)){
+        socket_map.find(_h_socket)->second->close();
+        delete map_read_buf.find(_h_socket)->second;
+        delete map_write_buf.find(_h_socket)->second;
+        socket_map.erase(_h_socket);
+        map_read_buf.erase(_h_socket);
+        map_write_buf.erase(_h_socket);
+        std::cout << "[GameSever][socket_map][size]:" << socket_map.size() << std::endl;
+    }
+
 }
 
-
+char * GameSever::read_buffer(int _h_socket){
+    return map_read_buf.find(_h_socket)->second;
+}
+char * GameSever::write_buffer(int _h_socket){
+    return map_write_buf.find(_h_socket)->second;
+}
 void GameSever::sendError(int _h_socket,unsigned int scence_obj_id){
+
     char failed_msg[18];
     unsigned int len = 2+sizeof(reply_map);
     unsigned int clen = send_amount;
@@ -167,6 +192,7 @@ void GameSever::send_field_map(int _h_socket,int map_type_id ,int sence_id,MapMa
         reply.scence_obj_id = sence_id;
         reply.ulen = ss.str().length();
 
+
         int data_len = map_data.length();
 
         int npc_data_len = loot_npc_data.length();
@@ -177,7 +203,7 @@ void GameSever::send_field_map(int _h_socket,int map_type_id ,int sence_id,MapMa
         int clen = len;
 
         int packege_size = len+sizeof(int)*2;
-        char * send = send_buf;
+        char * send = write_buffer(_h_socket);
         //大包头
         memcpy(send,(&len),sizeof(int));
         memcpy(send+4,(&clen),sizeof(int));
@@ -195,9 +221,9 @@ void GameSever::send_field_map(int _h_socket,int map_type_id ,int sence_id,MapMa
         memcpy(send+26+reply.ulen+data_len,loot_npc_data.c_str(),npc_data_len);
         async_write(_h_socket,send,packege_size);
         memset(send,'\0',SEND_BUF_SIZE);
-
+        //std::cout << "[GameSever][sendMap]["<< _h_socket <<"]" << std::endl;
     }catch(exception &e){
-        //std::cout << "[GameSever][getMap][error]" << e.what() << std::endl;
+        std::cout << "[GameSever][getMap][error]" << e.what() << std::endl;
         sendError(_h_socket,sence_id);
     }
 

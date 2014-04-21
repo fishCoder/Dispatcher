@@ -36,6 +36,7 @@ struct _settings_param_{
     int TIME_BUCKET;
     int is_run_config;
     int NODE_NUM;
+    int SLOW_DEAL;
     std::vector<std::string> node_url;
     unsigned int mark;
     _settings_param_():node_url(){
@@ -47,7 +48,9 @@ struct _settings_param_{
         MAX_USE_NUM   = ini.get_int("dispatcher.map_max_use");
         THREAD_POOL_NUM = ini.get_int("dispatcher.thread_pool_num");
         TIME_BUCKET   = ini.get_int("dispatcher.time_bucket");
+        SLOW_DEAL = ini.get_int("dispatcher.slow_deal");
         NODE_NUM =  ini.get_int("node.num");
+
         mark = 0;
         for(int i=0;i<NODE_NUM;i++){
             std::stringstream ss;
@@ -75,7 +78,7 @@ extern struct _settings_param_ param;
 typedef boost::shared_ptr<boost::asio::ip::tcp::socket> shared_ptr_socket;
 
 
-int static set_amount = 0;
+//int static set_amount = 0;
 inline void set_socket_option(shared_ptr_socket ptr_socket){
     boost::system::error_code ec;
 
@@ -107,23 +110,29 @@ inline void set_socket_option(shared_ptr_socket ptr_socket){
 			{
 				//unsigned int  l_linger = 0;
 				//POCO_LOG_WARNING(NET_LOGGER, __FUNCTION__<<" so linger:"<<l_linger);
-				//asio::socket_base::lingeroptionLinger(true, l_linger);
+				//boost::asio::socket_base::lingeroptionLinger(true, l_linger);
 				//m_socket.set_option(optionLinger, ec);
 			}
 			if(ec) break;
 			step++;
 		case 2:
-			// 	asio::detail::socket_option::integer<SOL_SOCKET, SO_RCVBUF> optionRcvBuff(65000);
-			//m_socket.set_option(optionRcvBuff, ec);
+		    {
+                boost::asio::detail::socket_option::integer<SOL_SOCKET, SO_RCVBUF> optionRcvBuff(65000);
+                m_socket.set_option(optionRcvBuff, ec);
+		    }
 			if(ec) break;
 			step++;
 
 		case 3:
-			// 	asio::detail::socket_option::integer<SOL_SOCKET, SO_SNDBUF> optionSndBuff(65000);
-			//m_socket.set_option(optionSndBuff, ec);
+		    {
+                boost::asio::detail::socket_option::integer<SOL_SOCKET, SO_SNDBUF> optionSndBuff(65000);
+                m_socket.set_option(optionSndBuff, ec);
+            }
 			if(ec) break;
 			step++;
-
+            /**
+			*case 4，5,6,7 的目的是为了防止TCP半连接的出现
+			*/
 		case 4:
 			{
 			    boost::asio::detail::socket_option::boolean<SOL_SOCKET, SO_KEEPALIVE> optionKeepAlive(true);
@@ -131,30 +140,31 @@ inline void set_socket_option(shared_ptr_socket ptr_socket){
 			}
 			if(ec) break;
 			step++;
+
 		case 5:
 			{
-			    boost::asio::detail::socket_option::integer<SOL_TCP, TCP_KEEPINTVL> optionKeepInterval(10);
+			    boost::asio::detail::socket_option::integer<SOL_TCP, TCP_KEEPINTVL> optionKeepInterval(5);
                 m_socket.set_option(optionKeepInterval, ec);
 			}
 			if(ec) break;
 			step++;
 		case 6:
 			{
-			    boost::asio::detail::socket_option::integer<SOL_TCP, TCP_KEEPIDLE> optionKeepIdle(60);
+			    boost::asio::detail::socket_option::integer<SOL_TCP, TCP_KEEPIDLE> optionKeepIdle(30);
                 m_socket.set_option(optionKeepIdle, ec);
 			}
 			if(ec) break;
 			step++;
 		case 7:
 			{
-			    boost::asio::detail::socket_option::integer<SOL_TCP, TCP_KEEPCNT> optionKeepCount(3);
+			    boost::asio::detail::socket_option::integer<SOL_TCP, TCP_KEEPCNT> optionKeepCount(2);
                 m_socket.set_option(optionKeepCount, ec);
 			}
 			if(ec) break;
 			step = 100;
 		}
 		if(step == 100){
-            std::cout << "[set_socket_option]:" << ++set_amount << std::endl;
+            //std::cout << "[set_socket_option]:" << ++set_amount << std::endl;
             break;
 		}
 	}

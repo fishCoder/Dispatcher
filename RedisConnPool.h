@@ -6,6 +6,10 @@
 #include <boost/shared_ptr.hpp>
 #include <vector>
 
+#include <boost/thread/mutex.hpp>
+
+
+
 #include "Output.h"
 
 typedef boost::shared_ptr<redis::client> shared_ptr_redis;
@@ -13,20 +17,30 @@ typedef boost::shared_ptr<redis::client> shared_ptr_redis;
 typedef struct _redis_client{
     bool isusing;
     shared_ptr_redis ptr_redis;
-    _redis_client():ptr_redis(new redis::client(param.redis_address,param.redis_port)){
+    _redis_client():ptr_redis(){
+        while(!connect());
         isusing = false;
+    }
+    bool connect(){
+        try{
+            ptr_redis.reset(new redis::client(param.redis_address,param.redis_port));
+            return true;
+        }catch(redis::connection_error &e){
+            std::cout << e.what() << std::endl;
+            return false;
+        }
     }
 } redis_struct;
 /**
-redis连接池 用vector管理redisclient
-当从连接池取redis连接时，查看是否有空闲的连接池
-有则取出，一个并标记该连接为忙
-
-使用辅助类ScopeRedis可以当不用连接时 自动释放该连接
-
-如何获得一个redisclient
-1.get_redis_index()返回一个vector的下标
-2.operator[] 运算符重载 传入一个下标 ，返回一个redisclient指针
+*redis连接池 用vector管理redisclient
+*当从连接池取redis连接时，查看是否有空闲的连接池
+*有则取出，一个并标记该连接为忙
+*
+*使用辅助类ScopeRedis可以当不用连接时 自动释放该连接
+*
+*如何获得一个redisclient
+*1.get_redis_index()返回一个vector的下标
+*2.operator[] 运算符重载 传入一个下标 ，返回一个redisclient指针
 */
 
 class RedisConnPool{
@@ -38,6 +52,8 @@ public:
 protected:
     void setRedisClientUsed(int index);
 private:
+    boost::mutex rc_mtx;
+    boost::mutex get_mtx;
     vector<redis_struct *> redis_vect;
 };
 

@@ -1,7 +1,5 @@
 #include "TaskList.h"
-#include <boost/thread/mutex.hpp>
 
-boost::mutex task_mtx;
 
 TaskList::TaskList(Generator &generator):taskLst(),generator(generator){
 

@@ -18,7 +18,7 @@ public:
 
     std::pair<unsigned int,std::string> get_field_map(int map_type_id,std::string & map_data,std::string & loot_npc_data);
     //对地图数量
-    void useMapKey(shared_ptr_redis ptr_redis,std::string str_map_id,int type);
+    void useMapKey(shared_ptr_redis ptr_redis,std::string str_map_id,int map_type_id);
 
     //删除一个地图数据后，增加reqmap中的删除数量，删除数量大于一定
     void addDelMapType(int map_type_id);

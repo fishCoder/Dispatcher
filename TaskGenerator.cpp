@@ -16,7 +16,7 @@ void TaskGenerator::repMapToTask(std::map<int,int> &reqMap,TaskList &lst){
             root["map"] = map_type_id;
             root["num"] = param.TASK_SIZE;
             map_num -= param.TASK_SIZE;
-        //    std::cout << "[TaskGenerator]: task :" << writer.write(root) << std::endl;
+            //std::cout << "[TaskGenerator]: task :" << writer.write(root) << std::endl;
             lst.push_back(writer.write(root));
         }
         if(map_num > 0){

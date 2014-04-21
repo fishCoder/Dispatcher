@@ -32,7 +32,6 @@ using namespace boost::posix_time;
 
 struct _settings_param_ param;
 
-static int map_send = 0;
 
 Dispatcher::Dispatcher(boost::asio::io_service &io_service):
                                                             msg_center(io_service),
@@ -44,7 +43,9 @@ Dispatcher::Dispatcher(boost::asio::io_service &io_service):
                                                             log(param.TIME_BUCKET)
 
 {
-    //绑定函数
+    /**
+    *绑定消息处理回调函数
+    */
     msg_center.set_handle_func(boost::bind(&Dispatcher::dealMessage,this,_1));
     //初始化redis
     map_manager.init_redis();
@@ -59,7 +60,10 @@ void Dispatcher::dealMessage(std::string msg){
     Json::Reader reader;
     Json::Value root;
     Configure configure;
-    if(!reader.parse(msg,root))return;
+    if(!reader.parse(msg,root)){
+        std::cout << "[Dispatcher->Parse]:  parse failed : " << msg <<std::endl;
+        return;
+    }
     int _h_socket = 0;
     int field_map_id = 0;
     switch(root.get(OPERATE_TYEP,-1).asInt()){
@@ -67,7 +71,7 @@ void Dispatcher::dealMessage(std::string msg){
         //std::cout << "[Dispatcher->Parse]: TaskComplete" <<std::endl;
         /**
         *收到这个消息有两种情况
-        *一，生成器完成了任务，返回消息。调度器查任务队列是否为空，否，则取出一个任务发给生成器；空则设置调度器状态为空闲
+        *一，生成器完成了任务，返回消息。调度器查询任务队列是否为空，不为空，则取出一个任务发给生成器；空则设置调度器状态为空闲
         *二，生成器初次连接时，消息中会多一个first字段，可以判断是否是初次连接
         */
         _h_socket = root.get(_H_SOCKET,0).asInt();
@@ -109,14 +113,14 @@ void Dispatcher::dealMessage(std::string msg){
         */
         _h_socket = root.get(_H_SOCKET,0).asInt();
         field_map_id = root.get("map",-1).asInt();
-        std::cout << "[Dispatcher][map_send] : " << ++map_send <<std::endl;
+        //std::cout << "[Dispatcher][map_send] : " << ++map_send <<std::endl;
         if(map_manager.isexsit(field_map_id))
             game_server.send_field_map(_h_socket,field_map_id,root.get(SENCE_ID,-1).asUInt(), map_manager);
         else{
             //TaskGenerator task_generator;
             game_server.sendError(_h_socket,root.get(SENCE_ID,-1).asUInt());
-            std::cout << "[Dispatcher->Parse] : urgent_gen_task" <<std::endl;
-            log.no_map_log(field_map_id,taskLst.size());
+            std::cout << "[Dispatcher->Parse]["<<_h_socket<<"] : urgent_gen_task" <<std::endl;
+            //log.no_map_log(field_map_id,taskLst.size());
             gs.urgent_gen_task(taskLst);
 
         }
@@ -142,6 +146,7 @@ void Dispatcher::dealMessage(std::string msg){
         {
             int map_type_id = root.get("map",0).asInt();
             int bucket = root.get("bucket",0).asInt();
+
             std::string json_log = log.get_bucket_log(map_type_id,bucket);
             node.async_write(_h_socket,json_log);
         }
@@ -164,7 +169,7 @@ void Dispatcher::dealMessage(std::string msg){
     ptime endtime = microsec_clock::local_time();
     time_duration td = endtime - begintime;
     int duration = td.total_milliseconds();
-    if(duration>10){
+    if(duration>param.SLOW_DEAL){
         log.slow_deal_log(msg,duration);
     }
     //std::cout << "[Dispatcher][dealMessage]total time :" << duration << std::endl;

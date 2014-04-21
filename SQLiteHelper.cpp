@@ -12,16 +12,26 @@ SQLiteHelper::SQLiteHelper(){
 }
 
 void SQLiteHelper::init_database(){
-    if(!exists(path("dispatcher.db"))){
-        int res = sqlite3_open("sql.db", &pDB);
+    if(!exists(path("log.db"))){
+        int res = sqlite3_open("log.db", &pDB);
         if(res){}
-        string map_info = "CREATE TABLE map_info(map INTEGER,num INTEGER,info VARCHAR(100));";
+        /**
+        *记录一小时的各种地图的生成数量与大小
+        */
         string log_table = "CREATE TABLE log(id INTEGER primary key,map INTEGER,amount INTEGER,size INTEGER,time VARCHAR(20));";
+        /**
+        *慢生成日志
+        */
         string slow_log = "CREATE TABLE slow_log(id INTEGER primary key,map INTEGER,duration INTEGER,ip char(15),gen_time varchar(20));";
+        /**
+        *请求不到地图
+        */
         string no_map_long = "CREATE TABLE no_map_log(map_id INTEGER,task_size INTEGER,time VARCHAR(20));";
+        /**
+        *处理消息慢日志
+        */
         string slow_deal_log = "CREATE TABLE slow_deal_log(decs VARCHAR(1024),duration INTEGER,gen_time varchar(20));";
         char * errMsg;
-        sqlite3_exec(pDB , map_info.c_str() ,0 ,0, &errMsg);
         sqlite3_exec(pDB , log_table.c_str() ,0 ,0, &errMsg);
 
         sqlite3_exec(pDB , slow_log.c_str() ,0 ,0, &errMsg);
@@ -29,7 +39,7 @@ void SQLiteHelper::init_database(){
         sqlite3_exec(pDB , slow_deal_log.c_str() ,0 ,0, &errMsg);
     }else{
         if(pDB == NULL)
-            sqlite3_open("sql.db", &pDB);
+            sqlite3_open("log.db", &pDB);
     }
 }
 

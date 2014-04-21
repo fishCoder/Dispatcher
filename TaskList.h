@@ -4,6 +4,9 @@
 
 #include <list>
 #include <iostream>
+#include <boost/thread/mutex.hpp>
+
+
 #include "GeneratorClass.h"
 
 class TaskList{
@@ -16,6 +19,7 @@ public:
     bool empty();
     int size();
 private:
+    boost::mutex task_mtx;
     std::list<std::string> taskLst;
     Generator &generator;
 };
